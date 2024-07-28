@@ -2,13 +2,13 @@
 @rendermode InteractiveServer
 
 @using AssistenteDeEnsino.Components.Player.Data
-@* @using AssistenteDeEnsino.Services.Markdown
-@using AssistenteDeEnsino.Services.OpenAI *@
+@using AssistenteDeEnsino.Services.Markdown
+@using AssistenteDeEnsino.Services.OpenAI
 @using Microsoft.AspNetCore.Components.Web
 
 @inject IVideoRepository _videoRepository
-@* @inject IGptService _gptService
-@inject IMarkdownService MarkdownService *@
+@inject IGptService _gptService
+@inject IMarkdownService MarkdownService
 
 <style>
     .message-user {
@@ -64,8 +64,7 @@
                     {
                         <div class="d-flex justify-content-end mb-2">
                             <div class="message-user bg-primary text-white p-2 rounded">
-                                @* @((MarkupString)MarkdownService.ConvertToHtml(message.Text)) *@
-                                @message.Text
+                                @((MarkupString)MarkdownService.ConvertToHtml(message.Text))
                             </div>
                             <img src="/images/avatar-user.png" alt="Você" class="rounded-circle ms-2" style="width: 40px; height: 40px;">
                         </div>
@@ -75,8 +74,7 @@
                         <div class="d-flex justify-content-start mb-2">
                             <img src="/images/avatar-assistente.png" alt="Assistente de Ensino" class="rounded-circle me-2" style="width: 40px; height: 40px;">
                             <div class="message-ai bg-light p-2 rounded">
-                                @* @((MarkupString)MarkdownService.ConvertToHtml(message.Text)) *@
-                                @message.Text
+                                @((MarkupString)MarkdownService.ConvertToHtml(message.Text))
                             </div>
                         </div>
                     }
@@ -124,30 +122,18 @@
     {
         if (!string.IsNullOrWhiteSpace(UserMessage))
         {
+            isProcessingMessage = true;
+            StateHasChanged();
+
             Messages.Add(new Message { Text = UserMessage, IsUser = true });
 
-            var resposta = GenerateDummyResponse();
+            var resposta = await _gptService.ProcessarPergunta(UserMessage, video.Transcript);
             Messages.Add(new Message { Text = resposta, IsUser = false });
 
             UserMessage = string.Empty;
+            isProcessingMessage = false;
+            StateHasChanged();
         }
-    }
-
-    private string GenerateDummyResponse()
-    {
-        var responses = new List<string>
-        {
-            "Essa é uma resposta dummy",
-            "Você pode tentar isso!",
-            "Verifique as configurações novamente",
-            "Isso parece interessante!",
-            "Que tal tentar uma abordagem diferente?"
-        };
-
-        var ramdom = new Random();
-        int index = ramdom.Next(responses.Count);
-
-        return responses[index];
     }
 
     private class Message
